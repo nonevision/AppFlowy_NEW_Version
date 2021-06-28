@@ -13,30 +13,29 @@ fn test() {
     let one_params_command = "one params".to_string();
     let two_params_command = "two params".to_string();
 
-    let runner = FlowySystem::construct(|| {
-        vec![Module::new()
-            .event(no_params_command.clone(), no_params)
-            .event(one_params_command.clone(), one_params)
-            .event(two_params_command.clone(), two_params)]
-    });
-
-    let stream = CommandStream::new(FlowySystem::current().module_map());
-    let tx = stream.data_tx.clone();
-
-    runner
-        .spawn(stream)
-        .spawn(async move {
-            let request = EventRequest::new(no_params_command.clone());
-            let stream_data = StreamData::new(
-                1,
-                Some(request),
-                Box::new(|config, response| {
-                    log::info!("{:?}", response);
-                }),
-            );
-            tx.send(stream_data);
-            FlowySystem::current().stop();
-        })
-        .run()
-        .unwrap();
+    let stream = CommandStream::<i64>::new();
+    let tx = stream.tx();
+    FlowySystem::construct(
+        || {
+            vec![Module::new()
+                .event(no_params_command.clone(), no_params)
+                .event(one_params_command.clone(), one_params)
+                .event(two_params_command.clone(), two_params)]
+        },
+        stream,
+    )
+    .spawn(async move {
+        let request = EventRequest::new(no_params_command.clone());
+        let stream_data = StreamData::new(
+            1,
+            Some(request),
+            Box::new(|config, response| {
+                log::info!("{:?}", response);
+            }),
+        );
+        tx.send(stream_data);
+        FlowySystem::current().stop();
+    })
+    .run()
+    .unwrap();
 }
