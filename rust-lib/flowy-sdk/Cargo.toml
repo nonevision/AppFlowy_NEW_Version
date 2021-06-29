@@ -7,3 +7,4 @@ edition = "2018"
 
 [dependencies]
 flowy-sys = { path = "../flowy-sys" }
+flowy-log = { path = "../flowy-log" }
