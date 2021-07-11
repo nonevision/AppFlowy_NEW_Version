@@ -22,10 +22,3 @@ const SignInParams$json = const {
   ],
 };
 
-const SignInResponse$json = const {
-  '1': 'SignInResponse',
-  '2': const [
-    const {'1': 'is_success', '3': 1, '4': 1, '5': 8, '10': 'isSuccess'},
-  ],
-};
-

@@ -9,7 +9,7 @@ import 'dart:core' as $core;
 const UserEvent$json = const {
   '1': 'UserEvent',
   '2': const [
-    const {'1': 'AuthCheck', '2': 0},
+    const {'1': 'GetStatus', '2': 0},
     const {'1': 'SignIn', '2': 1},
     const {'1': 'SignUp', '2': 2},
     const {'1': 'SignOut', '2': 3},
