@@ -8,7 +8,7 @@ use flowy_dispatch::prelude::{
 use flowy_user::{
     entities::{SignInParams, SignUpParams, UserDetail},
     errors::{ErrorBuilder, UserErrCode, UserError},
-    prelude::UserServer,
+    prelude::UserWorkspaceAction,
     sql_tables::UserTable,
 };
 use flowy_workspace::{
@@ -18,41 +18,13 @@ use flowy_workspace::{
 
 pub type ArcFlowyServer = std::sync::Arc<dyn FlowyServer>;
 
-pub trait FlowyServer: UserServer {}
+pub trait FlowyServer: UserWorkspaceAction {}
 
 pub struct FlowyServerMocker {}
 
 impl FlowyServer for FlowyServerMocker {}
 
-impl UserServer for FlowyServerMocker {
-    fn sign_up(&self, params: SignUpParams) -> Result<UserTable, UserError> {
-        let user_id = params.email.clone();
-        Ok(UserTable::new(
-            user_id,
-            params.name,
-            params.email,
-            params.password,
-        ))
-    }
-
-    fn sign_in(&self, params: SignInParams) -> Result<UserTable, UserError> {
-        let user_id = params.email.clone();
-        Ok(UserTable::new(
-            user_id,
-            "".to_owned(),
-            params.email,
-            params.password,
-        ))
-    }
-
-    fn sign_out(&self, _user_id: &str) -> Result<(), UserError> {
-        Err(ErrorBuilder::new(UserErrCode::Unknown).build())
-    }
-
-    fn get_user_info(&self, _user_id: &str) -> Result<UserDetail, UserError> {
-        Err(ErrorBuilder::new(UserErrCode::Unknown).build())
-    }
-
+impl UserWorkspaceAction for FlowyServerMocker {
     fn create_workspace(
         &self,
         name: &str,
