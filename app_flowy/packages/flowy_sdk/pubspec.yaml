@@ -16,8 +16,9 @@ dependencies:
   protobuf: "2.0.0"
   dartz: '0.10.0-nullsafety.2'
   freezed_annotation: ^0.14.1
-  flowy_infra:
-    path: ../flowy_infra
+  flowy_log:
+    path: ../flowy_log
+  
     
 dev_dependencies:
   flutter_test:
