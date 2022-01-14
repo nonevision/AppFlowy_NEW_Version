@@ -16,6 +16,7 @@ lib-infra = { path = "../../../shared-lib/lib-infra" }
 derive_more = {version = "0.99", features = ["display"]}
 lib-dispatch = { path = "../lib-dispatch" }
 flowy-database = { path = "../flowy-database" }
+flowy-sync = { path = "../flowy-sync" }
 flowy-error = { path = "../flowy-error", features = ["collaboration", "ot", "backend", "serde", "db"] }
 dart-notify = { path = "../dart-notify" }
 
@@ -53,4 +54,4 @@ rand = "0.7.3"
 
 [features]
 http_server = []
-flowy_unit_test = ["lib-ot/flowy_unit_test"]
+flowy_unit_test = ["lib-ot/flowy_unit_test", "flowy-sync/flowy_unit_test"]
