@@ -13,13 +13,13 @@ use flowy_collaboration::{
         ClientRevisionWSDataType as ClientRevisionWSDataTypePB,
         Revision as RevisionPB,
     },
-    server_document::{RevisionUser, ServerDocumentManager, SyncResponse},
+    server_document::{RevisionSyncResponse, RevisionUser, ServerDocumentManager},
 };
 use futures::stream::StreamExt;
 use std::sync::Arc;
 use tokio::sync::{mpsc, oneshot};
 
-pub enum WSActorMessage {
+pub enum DocumentWSActorMessage {
     ClientData {
         client_data: WSClientData,
         persistence: Arc<FlowyPersistence>,
@@ -28,12 +28,12 @@ pub enum WSActorMessage {
 }
 
 pub struct DocumentWebSocketActor {
-    receiver: Option<mpsc::Receiver<WSActorMessage>>,
+    receiver: Option<mpsc::Receiver<DocumentWSActorMessage>>,
     doc_manager: Arc<ServerDocumentManager>,
 }
 
 impl DocumentWebSocketActor {
-    pub fn new(receiver: mpsc::Receiver<WSActorMessage>, manager: Arc<ServerDocumentManager>) -> Self {
+    pub fn new(receiver: mpsc::Receiver<DocumentWSActorMessage>, manager: Arc<ServerDocumentManager>) -> Self {
         Self {
             receiver: Some(receiver),
             doc_manager: manager,
@@ -44,7 +44,7 @@ impl DocumentWebSocketActor {
         let mut receiver = self
             .receiver
             .take()
-            .expect("DocActor's receiver should only take one time");
+            .expect("DocumentWebSocketActor's receiver should only take one time");
 
         let stream = stream! {
             loop {
@@ -58,19 +58,19 @@ impl DocumentWebSocketActor {
         stream.for_each(|msg| self.handle_message(msg)).await;
     }
 
-    async fn handle_message(&self, msg: WSActorMessage) {
+    async fn handle_message(&self, msg: DocumentWSActorMessage) {
         match msg {
-            WSActorMessage::ClientData {
+            DocumentWSActorMessage::ClientData {
                 client_data,
                 persistence: _,
                 ret,
             } => {
-                let _ = ret.send(self.handle_client_data(client_data).await);
+                let _ = ret.send(self.handle_document_data(client_data).await);
             },
         }
     }
 
-    async fn handle_client_data(&self, client_data: WSClientData) -> Result<()> {
+    async fn handle_document_data(&self, client_data: WSClientData) -> Result<()> {
         let WSClientData { user, socket, data } = client_data;
         let document_client_data = spawn_blocking(move || parse_from_bytes::<ClientRevisionWSDataPB>(&data))
             .await
@@ -83,8 +83,7 @@ impl DocumentWebSocketActor {
             document_client_data.ty
         );
 
-        let user = Arc::new(HttpDocumentUser { user, socket });
-
+        let user = Arc::new(DocumentRevisionUser { user, socket });
         match &document_client_data.ty {
             ClientRevisionWSDataTypePB::ClientPushRev => {
                 let _ = self
@@ -115,34 +114,34 @@ fn verify_md5(revision: &RevisionPB) -> Result<()> {
 }
 
 #[derive(Clone)]
-pub struct HttpDocumentUser {
+pub struct DocumentRevisionUser {
     pub user: Arc<WSUser>,
     pub(crate) socket: Socket,
 }
 
-impl std::fmt::Debug for HttpDocumentUser {
+impl std::fmt::Debug for DocumentRevisionUser {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        f.debug_struct("ServerDocUser")
+        f.debug_struct("DocumentRevisionUser")
             .field("user", &self.user)
             .field("socket", &self.socket)
             .finish()
     }
 }
 
-impl RevisionUser for HttpDocumentUser {
+impl RevisionUser for DocumentRevisionUser {
     fn user_id(&self) -> String { self.user.id().to_string() }
 
-    fn receive(&self, resp: SyncResponse) {
+    fn receive(&self, resp: RevisionSyncResponse) {
         let result = match resp {
-            SyncResponse::Pull(data) => {
+            RevisionSyncResponse::Pull(data) => {
                 let msg: WebSocketMessage = data.into();
                 self.socket.try_send(msg).map_err(internal_error)
             },
-            SyncResponse::Push(data) => {
+            RevisionSyncResponse::Push(data) => {
                 let msg: WebSocketMessage = data.into();
                 self.socket.try_send(msg).map_err(internal_error)
             },
-            SyncResponse::Ack(data) => {
+            RevisionSyncResponse::Ack(data) => {
                 let msg: WebSocketMessage = data.into();
                 self.socket.try_send(msg).map_err(internal_error)
             },
@@ -150,7 +149,7 @@ impl RevisionUser for HttpDocumentUser {
 
         match result {
             Ok(_) => {},
-            Err(e) => log::error!("[ServerDocUser]: {}", e),
+            Err(e) => log::error!("[DocumentRevisionUser]: {}", e),
         }
     }
 }
