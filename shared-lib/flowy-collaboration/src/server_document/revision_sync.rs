@@ -1,13 +1,14 @@
 use crate::{
     entities::{
         revision::RevisionRange,
-        ws::{ServerRevisionWSData, ServerRevisionWSDataBuilder},
+        ws_data::{ServerRevisionWSData, ServerRevisionWSDataBuilder},
     },
     errors::CollaborateError,
     protobuf::{RepeatedRevision as RepeatedRevisionPB, Revision as RevisionPB},
     server_document::{document_pad::ServerDocument, DocumentCloudPersistence},
     util::*,
 };
+use lib_infra::future::BoxResultFuture;
 use lib_ot::{core::OperationTransformable, rich_text::RichTextDelta};
 use parking_lot::RwLock;
 use std::{
@@ -23,6 +24,16 @@ use std::{
 pub trait RevisionUser: Send + Sync + Debug {
     fn user_id(&self) -> String;
     fn receive(&self, resp: RevisionSyncResponse);
+}
+
+pub trait RevisionSyncObject {
+    type SyncObject;
+
+    fn read_revisions(&self, rev_ids: Option<Vec<i64>>) -> BoxResultFuture<Vec<RevisionPB>, CollaborateError>;
+
+    fn save_revisions(&self, repeated_revision: RepeatedRevisionPB) -> BoxResultFuture<(), CollaborateError>;
+
+    fn reset_object(&self, repeated_revision: RepeatedRevisionPB) -> BoxResultFuture<(), CollaborateError>;
 }
 
 pub enum RevisionSyncResponse {
