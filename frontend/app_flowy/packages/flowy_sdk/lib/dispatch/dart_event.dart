@@ -1,6 +1,6 @@
 
 /// Auto generate. Do not edit
-part of 'dispatch.dart';
+part of '../../dispatch.dart';
 class FolderEventCreateWorkspace {
      CreateWorkspaceRequest request;
      FolderEventCreateWorkspace(this.request);
