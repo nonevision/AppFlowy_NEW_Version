@@ -1,5 +1,6 @@
 use crate::cache::disk::RevisionDiskCache;
 use crate::disk::{RevisionChangeset, RevisionRecord, RevisionState};
+use crate::memory::RevisionMemoryCacheDelegate;
 use bytes::Bytes;
 use diesel::{sql_types::Integer, update, SqliteConnection};
 use flowy_collaboration::{
@@ -23,12 +24,9 @@ pub struct SQLiteTextBlockRevisionPersistence {
 impl RevisionDiskCache for SQLiteTextBlockRevisionPersistence {
     type Error = FlowyError;
 
-    fn create_revision_records(
-        &self,
-        revision_records: Vec<RevisionRecord>,
-        conn: &SqliteConnection,
-    ) -> Result<(), Self::Error> {
-        let _ = TextRevisionSql::create(revision_records, conn)?;
+    fn create_revision_records(&self, revision_records: Vec<RevisionRecord>) -> Result<(), Self::Error> {
+        let conn = self.pool.get().map_err(internal_error)?;
+        let _ = TextRevisionSql::create(revision_records, &*conn)?;
         Ok(())
     }
 
@@ -78,14 +76,14 @@ impl RevisionDiskCache for SQLiteTextBlockRevisionPersistence {
         let conn = self.pool.get().map_err(internal_error)?;
         conn.immediate_transaction::<_, FlowyError, _>(|| {
             let _ = TextRevisionSql::delete(object_id, deleted_rev_ids, &*conn)?;
-            let _ = self.create_revision_records(inserted_records, &*conn)?;
+            let _ = TextRevisionSql::create(inserted_records, &*conn)?;
             Ok(())
         })
     }
 }
 
 impl SQLiteTextBlockRevisionPersistence {
-    pub(crate) fn new(user_id: &str, pool: Arc<ConnectionPool>) -> Self {
+    pub fn new(user_id: &str, pool: Arc<ConnectionPool>) -> Self {
         Self {
             user_id: user_id.to_owned(),
             pool,
@@ -210,48 +208,12 @@ enum TextRevisionState {
     Sync = 0,
     Ack = 1,
 }
+impl_sql_integer_expression!(TextRevisionState);
+impl_rev_state_map!(TextRevisionState);
 
 impl std::default::Default for TextRevisionState {
     fn default() -> Self {
         TextRevisionState::Sync
-    }
-}
-
-impl std::convert::From<i32> for TextRevisionState {
-    fn from(value: i32) -> Self {
-        match value {
-            0 => TextRevisionState::Sync,
-            1 => TextRevisionState::Ack,
-            o => {
-                tracing::error!("Unsupported rev state {}, fallback to RevState::Local", o);
-                TextRevisionState::Sync
-            }
-        }
-    }
-}
-
-impl TextRevisionState {
-    pub fn value(&self) -> i32 {
-        *self as i32
-    }
-}
-impl_sql_integer_expression!(TextRevisionState);
-
-impl std::convert::From<TextRevisionState> for RevisionState {
-    fn from(s: TextRevisionState) -> Self {
-        match s {
-            TextRevisionState::Sync => RevisionState::Sync,
-            TextRevisionState::Ack => RevisionState::Ack,
-        }
-    }
-}
-
-impl std::convert::From<RevisionState> for TextRevisionState {
-    fn from(s: RevisionState) -> Self {
-        match s {
-            RevisionState::Sync => TextRevisionState::Sync,
-            RevisionState::Ack => TextRevisionState::Ack,
-        }
     }
 }
 
@@ -279,6 +241,7 @@ pub enum RevTableType {
     Local = 0,
     Remote = 1,
 }
+impl_sql_integer_expression!(RevTableType);
 
 impl std::default::Default for RevTableType {
     fn default() -> Self {
@@ -298,12 +261,6 @@ impl std::convert::From<i32> for RevTableType {
         }
     }
 }
-impl RevTableType {
-    pub fn value(&self) -> i32 {
-        *self as i32
-    }
-}
-impl_sql_integer_expression!(RevTableType);
 
 impl std::convert::From<RevType> for RevTableType {
     fn from(ty: RevType) -> Self {
