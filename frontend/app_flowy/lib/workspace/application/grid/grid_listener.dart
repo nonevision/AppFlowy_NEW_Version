@@ -9,13 +9,11 @@ import 'dart:typed_data';
 import 'package:app_flowy/core/notification_helper.dart';
 import 'package:dartz/dartz.dart';
 
-typedef CreateRowNotifiedValue = Either<RepeatedRow, FlowyError>;
-typedef DeleteRowNotifierValue = Either<RepeatedRow, FlowyError>;
+typedef GridBlockUpdateNotifiedValue = Either<GridBlockId, FlowyError>;
 
 class GridListener {
   final String gridId;
-  PublishNotifier<CreateRowNotifiedValue> createRowNotifier = PublishNotifier<CreateRowNotifiedValue>();
-  PublishNotifier<DeleteRowNotifierValue> deleteRowNotifier = PublishNotifier<DeleteRowNotifierValue>();
+  PublishNotifier<GridBlockUpdateNotifiedValue> blockUpdateNotifier = PublishNotifier<GridBlockUpdateNotifiedValue>();
   StreamSubscription<SubscribeObject>? _subscription;
   late GridNotificationParser _parser;
 
@@ -34,16 +32,10 @@ class GridListener {
 
   void _handleObservableType(GridNotification ty, Either<Uint8List, FlowyError> result) {
     switch (ty) {
-      case GridNotification.GridDidCreateRows:
+      case GridNotification.GridDidUpdateBlock:
         result.fold(
-          (payload) => createRowNotifier.value = left(RepeatedRow.fromBuffer(payload)),
-          (error) => createRowNotifier.value = right(error),
-        );
-        break;
-      case GridNotification.GridDidDeleteRow:
-        result.fold(
-          (payload) => deleteRowNotifier.value = left(RepeatedRow.fromBuffer(payload)),
-          (error) => deleteRowNotifier.value = right(error),
+          (payload) => blockUpdateNotifier.value = left(GridBlockId.fromBuffer(payload)),
+          (error) => blockUpdateNotifier.value = right(error),
         );
         break;
 
@@ -54,7 +46,6 @@ class GridListener {
 
   Future<void> close() async {
     await _subscription?.cancel();
-    createRowNotifier.dispose();
-    deleteRowNotifier.dispose();
+    blockUpdateNotifier.dispose();
   }
 }
