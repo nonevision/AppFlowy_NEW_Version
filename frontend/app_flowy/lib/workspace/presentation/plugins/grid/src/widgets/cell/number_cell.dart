@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NumberCell extends StatefulWidget {
-  final FutureCellData cellData;
+  final CellData cellData;
 
   const NumberCell({
     required this.cellData,
