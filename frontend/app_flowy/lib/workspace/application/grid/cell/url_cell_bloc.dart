@@ -18,12 +18,11 @@ class URLCellBloc extends Bloc<URLCellEvent, URLCellState> {
           initial: () {
             _startListening();
           },
-          updateText: (text) {
-            cellContext.saveCellData(text);
-            emit(state.copyWith(content: text));
-          },
           didReceiveCellUpdate: (cellData) {
-            emit(state.copyWith(content: cellData.content, url: cellData.url));
+            emit(state.copyWith(
+              content: cellData?.content ?? "",
+              url: cellData?.url ?? "",
+            ));
           },
         );
       },
@@ -54,8 +53,7 @@ class URLCellBloc extends Bloc<URLCellEvent, URLCellState> {
 @freezed
 class URLCellEvent with _$URLCellEvent {
   const factory URLCellEvent.initial() = _InitialCell;
-  const factory URLCellEvent.didReceiveCellUpdate(URLCellData cell) = _DidReceiveCellUpdate;
-  const factory URLCellEvent.updateText(String text) = _UpdateText;
+  const factory URLCellEvent.didReceiveCellUpdate(URLCellData? cell) = _DidReceiveCellUpdate;
 }
 
 @freezed
