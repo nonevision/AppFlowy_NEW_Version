@@ -1,13 +1,16 @@
 #!/bin/bash
 
 BLUE="\e[34m"
-GREEN="\e[32m"
+RED="\e[31m"
 ENDCOLOR="\e[0m"
 
+# Note: This script does not install applications which are installed by the package manager. There are too many package managers out there.
 
 # Install rust on Linux
-read -p 'Do you want to install Rust? [y/N] ' installrust
+echo -e "${BLUE}AppFlowy : The Rust programming language is required to compile AppFlowy.${ENDCOLOR}"
+echo -e "${BLUE}AppFlowy : We can install it now if you don't already have it on your system.${ENDCOLOR}"
 
+read -p "${BLUE}AppFlowy : Do you want to install Rust? [y/N]${ENDCOLOR} " installrust
 
 if [ ${installrust^^} == "Y" ]; then
    echo -e "${BLUE}AppFlowy : Installing Rust.${ENDCOLOR}"
@@ -48,3 +51,6 @@ cargo install --force duckscript_cli
 echo -e "${BLUE}AppFlowy : Installing CommitLint.${ENDCOLOR}"
 npm install @commitlint/cli @commitlint/config-conventional --save-dev
 
+# Check prerequisites
+echo -e "${BLUE}AppFlowy : Checking prerequisites.${ENDCOLOR}"
+cargo make flowy_dev
