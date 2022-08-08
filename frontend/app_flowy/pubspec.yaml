@@ -77,7 +77,6 @@ dependencies:
   reorderables: ^0.5.0
   linked_scroll_controller: ^0.2.0
 
-
 dev_dependencies:
   flutter_lints: ^1.0.0
   flutter_test:
@@ -87,7 +86,7 @@ dev_dependencies:
   bloc_test: ^9.0.2
 
 dependency_overrides:
-  analyzer: ">=4.2.0 <5.0.0"
+  analyzer: ">=4.4.0 <5.0.0"
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
