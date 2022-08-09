@@ -3,6 +3,7 @@ import 'package:flowy_editor/editor_state.dart';
 import 'package:flowy_editor/infra/flowy_svg.dart';
 import 'package:flowy_editor/render/rich_text/default_selectable.dart';
 import 'package:flowy_editor/render/rich_text/flowy_rich_text.dart';
+import 'package:flowy_editor/render/rich_text/rich_text_style.dart';
 import 'package:flowy_editor/render/selection/selectable.dart';
 import 'package:flowy_editor/service/render_plugin_service.dart';
 import 'package:flutter/material.dart';
@@ -56,21 +57,22 @@ class _BulletedListTextNodeWidgetState extends State<BulletedListTextNodeWidget>
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        FlowySvg(
-          size: Size.square(leftPadding),
-          name: 'point',
-        ),
-        Expanded(
-          child: FlowyRichText(
+    return SizedBox(
+      width: maxTextNodeWidth,
+      child: Row(
+        children: [
+          FlowySvg(
+            size: Size.square(leftPadding),
+            name: 'point',
+          ),
+          FlowyRichText(
             key: _richTextKey,
             placeholderText: 'List',
             textNode: widget.textNode,
             editorState: widget.editorState,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
