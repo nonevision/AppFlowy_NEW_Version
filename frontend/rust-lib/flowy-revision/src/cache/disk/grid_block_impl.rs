@@ -1,5 +1,5 @@
 use crate::cache::disk::RevisionDiskCache;
-use crate::disk::{RevisionChangeset, RevisionRecord, RevisionState};
+use crate::disk::{RevisionChangeset, RevisionRecord};
 use bytes::Bytes;
 use diesel::{sql_types::Integer, update, SqliteConnection};
 use flowy_database::{
@@ -103,7 +103,7 @@ impl GridMetaRevisionSql {
                     record.revision.object_id,
                     record.revision.rev_id
                 );
-                let rev_state: GridMetaRevisionState = record.state.into();
+                let rev_state: GridBlockRevisionState = record.state.into();
                 (
                     dsl::object_id.eq(record.revision.object_id),
                     dsl::base_rev_id.eq(record.revision.base_rev_id),
@@ -121,7 +121,7 @@ impl GridMetaRevisionSql {
     }
 
     fn update(changeset: RevisionChangeset, conn: &SqliteConnection) -> Result<(), FlowyError> {
-        let state: GridMetaRevisionState = changeset.state.clone().into();
+        let state: GridBlockRevisionState = changeset.state.clone().into();
         let filter = dsl::grid_meta_rev_table
             .filter(dsl::rev_id.eq(changeset.rev_id.as_ref()))
             .filter(dsl::object_id.eq(changeset.object_id));
@@ -146,7 +146,7 @@ impl GridMetaRevisionSql {
         if let Some(rev_ids) = rev_ids {
             sql = sql.filter(dsl::rev_id.eq_any(rev_ids));
         }
-        let rows = sql.order(dsl::rev_id.asc()).load::<GridMetaRevisionTable>(conn)?;
+        let rows = sql.order(dsl::rev_id.asc()).load::<GridBlockRevisionTable>(conn)?;
         let records = rows
             .into_iter()
             .map(|row| mk_revision_record_from_table(user_id, row))
@@ -166,7 +166,7 @@ impl GridMetaRevisionSql {
             .filter(dsl::rev_id.le(range.end))
             .filter(dsl::object_id.eq(object_id))
             .order(dsl::rev_id.asc())
-            .load::<GridMetaRevisionTable>(conn)?;
+            .load::<GridBlockRevisionTable>(conn)?;
 
         let revisions = rev_tables
             .into_iter()
@@ -192,31 +192,31 @@ impl GridMetaRevisionSql {
 
 #[derive(PartialEq, Clone, Debug, Queryable, Identifiable, Insertable, Associations)]
 #[table_name = "grid_meta_rev_table"]
-struct GridMetaRevisionTable {
+struct GridBlockRevisionTable {
     id: i32,
     object_id: String,
     base_rev_id: i64,
     rev_id: i64,
     data: Vec<u8>,
-    state: GridMetaRevisionState,
+    state: GridBlockRevisionState,
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, FromSqlRow, AsExpression)]
 #[repr(i32)]
 #[sql_type = "Integer"]
-pub enum GridMetaRevisionState {
+pub enum GridBlockRevisionState {
     Sync = 0,
     Ack = 1,
 }
-impl_sql_integer_expression!(GridMetaRevisionState);
-impl_rev_state_map!(GridMetaRevisionState);
-impl std::default::Default for GridMetaRevisionState {
+impl_sql_integer_expression!(GridBlockRevisionState);
+impl_rev_state_map!(GridBlockRevisionState);
+impl std::default::Default for GridBlockRevisionState {
     fn default() -> Self {
-        GridMetaRevisionState::Sync
+        GridBlockRevisionState::Sync
     }
 }
 
-fn mk_revision_record_from_table(user_id: &str, table: GridMetaRevisionTable) -> RevisionRecord {
+fn mk_revision_record_from_table(user_id: &str, table: GridBlockRevisionTable) -> RevisionRecord {
     let md5 = md5(&table.data);
     let revision = Revision::new(
         &table.object_id,
