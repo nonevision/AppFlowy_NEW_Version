@@ -17,7 +17,7 @@ export const GridCheckBox = ({
 
   return (
     <div className='flex w-full justify-start'>
-      {cellController && <EditCheckboxCell cellController={cellController} data={data as unknown as boolean} />}
+      {cellController && <EditCheckboxCell cellController={cellController} data={data as 'Yes' | 'No' | undefined} />}
     </div>
   );
 };
