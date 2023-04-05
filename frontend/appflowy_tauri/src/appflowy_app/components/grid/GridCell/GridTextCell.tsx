@@ -1,7 +1,6 @@
 import { CellIdentifier } from '@/appflowy_app/stores/effects/database/cell/cell_bd_svc';
 import { CellCache } from '@/appflowy_app/stores/effects/database/cell/cell_cache';
 import { FieldController } from '@/appflowy_app/stores/effects/database/field/field_controller';
-import { useState, useEffect } from 'react';
 import { useCell } from '../../_shared/database-hooks/useCell';
 import { EditCellText } from '../../_shared/EditRow/EditCellText';
 
