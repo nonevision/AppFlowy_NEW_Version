@@ -35,7 +35,7 @@ void main() {
         email: email,
       );
       await tester.tapGoogleLoginInButton();
-      tester.expectToSeeHomePage();
+      await tester.expectToSeeHomePage();
 
       // create a new document called Sample
       await tester.createNewPageWithName(
@@ -52,8 +52,7 @@ void main() {
 
       await tester.openSettings();
       await tester.openSettingsPage(SettingsPage.user);
-      await tester.tapButton(find.byType(SettingLogoutButton));
-      tester.expectToSeeText(LocaleKeys.button_ok.tr());
+      await tester.logout();
     });
 
     testWidgets('sync doc from server', (tester) async {
@@ -62,7 +61,7 @@ void main() {
         email: email,
       );
       await tester.tapGoogleLoginInButton();
-      tester.expectToSeeHomePage();
+      await tester.expectToSeeHomePage();
       await tester.pumpAndSettle(const Duration(seconds: 2));
 
       // The document will be synced from the server
