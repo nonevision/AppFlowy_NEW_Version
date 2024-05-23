@@ -41,7 +41,7 @@ export const Document = () => {
           <DocumentHeader doc={doc} viewId={documentId} />
           <div className={'flex w-full justify-center'}>
             <div className={'max-w-screen w-[964px] min-w-0'}>
-              <Editor doc={doc} readOnly={true} />
+              <Editor doc={doc} readOnly={true} includeRoot={true} />
             </div>
           </div>
         </div>
