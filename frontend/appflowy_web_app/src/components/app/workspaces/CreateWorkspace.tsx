@@ -3,7 +3,7 @@ import { notify } from '@/components/_shared/notify';
 import { useAppHandlers } from '@/components/app/app.hooks';
 import { useService } from '@/components/main/app.hooks';
 import { Button, OutlinedInput } from '@mui/material';
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ReactComponent as AddIcon } from '@/assets/add.svg';
 
@@ -37,14 +37,20 @@ function CreateWorkspace () {
   }, [handleSelectedWorkspace, name, service]);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  useEffect(() => {
+    if (!open) {
+      setName('');
+    }
+  }, [open]);
+
   return (
     <>
       <Button
         color={'inherit'}
-        className={'w-full justify-start px-3'}
+        className={'w-full justify-start px-3 gap-0.5'}
         onClick={() => setOpen(true)}
         startIcon={
-          <div className={'w-9 flex items-center justify-center h-9 rounded-[8px] border border-line-divider'}>
+          <div className={'w-[33px] flex items-center justify-center h-[33px] rounded-[8px] border border-line-divider'}>
             <AddIcon />
           </div>
         }
@@ -54,7 +60,11 @@ function CreateWorkspace () {
       <NormalModal
         title={t('workspace.create')}
         open={open}
-        onClose={() => setOpen(false)}
+        onClose={() => {
+          setOpen(false);
+        }}
+        disableRestoreFocus={true}
+        disableAutoFocus={false}
         okLoading={loading}
         onOk={handleCreate}
         okText={t('button.create')}
