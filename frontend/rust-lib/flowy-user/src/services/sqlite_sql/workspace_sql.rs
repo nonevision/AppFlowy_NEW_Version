@@ -1,10 +1,11 @@
 use chrono::{TimeZone, Utc};
-use diesel::RunQueryDsl;
-use flowy_error::FlowyError;
+use diesel::{RunQueryDsl, SqliteConnection};
+use flowy_error::{FlowyError, FlowyResult};
 use flowy_sqlite::schema::user_workspace_table;
 use flowy_sqlite::DBConnection;
 use flowy_sqlite::{query_dsl::*, ExpressionMethods};
 use flowy_user_pub::entities::{AuthType, UserWorkspace};
+use tracing::{info, trace, warn};
 
 #[derive(Clone, Default, Queryable, Identifiable, Insertable)]
 #[diesel(table_name = user_workspace_table)]
@@ -91,10 +92,9 @@ pub fn upsert_user_workspace(
   uid: i64,
   auth_type: AuthType,
   user_workspace: UserWorkspace,
-  conn: &mut DBConnection,
+  conn: &mut SqliteConnection,
 ) -> Result<(), FlowyError> {
   let new_record = UserWorkspaceTable::from_workspace(uid, &user_workspace, auth_type)?;
-
   diesel::insert_into(user_workspace_table::table)
     .values(new_record.clone())
     .on_conflict(user_workspace_table::id)
@@ -114,6 +114,20 @@ pub fn upsert_user_workspace(
   Ok(())
 }
 
+pub fn delete_user_workspace(mut conn: DBConnection, workspace_id: &str) -> FlowyResult<()> {
+  let n = conn.immediate_transaction(|conn| {
+    let rows_affected: usize =
+      diesel::delete(user_workspace_table::table.filter(user_workspace_table::id.eq(workspace_id)))
+        .execute(conn)?;
+    Ok::<usize, FlowyError>(rows_affected)
+  })?;
+
+  if n != 1 {
+    warn!("expected to delete 1 row, but deleted {} rows", n);
+  }
+  Ok(())
+}
+
 impl From<UserWorkspaceTable> for UserWorkspace {
   fn from(value: UserWorkspaceTable) -> Self {
     Self {
@@ -129,4 +143,46 @@ impl From<UserWorkspaceTable> for UserWorkspace {
       role: value.role.map(|v| v.into()),
     }
   }
+}
+
+/// Delete all user workspaces for the given user and auth type.
+pub fn delete_user_all_workspace(
+  uid: i64,
+  auth_type: AuthType,
+  conn: &mut SqliteConnection,
+) -> FlowyResult<()> {
+  let n = diesel::delete(
+    user_workspace_table::dsl::user_workspace_table
+      .filter(user_workspace_table::uid.eq(uid))
+      .filter(user_workspace_table::auth_type.eq(auth_type as i32)),
+  )
+  .execute(conn)?;
+  info!(
+    "Delete {} workspaces for user {} and auth type {:?}",
+    n, uid, auth_type
+  );
+  Ok(())
+}
+
+/// Delete all user workspaces for the given user and auth type, then insert the provided user workspaces.
+pub fn delete_all_then_insert_user_workspaces(
+  uid: i64,
+  mut conn: DBConnection,
+  auth_type: AuthType,
+  user_workspaces: &[UserWorkspace],
+) -> FlowyResult<()> {
+  conn.immediate_transaction(|conn| {
+    delete_user_all_workspace(uid, auth_type, conn)?;
+
+    info!(
+      "Insert {} workspaces for user {} and auth type {:?}",
+      user_workspaces.len(),
+      uid,
+      auth_type
+    );
+    for user_workspace in user_workspaces {
+      upsert_user_workspace(uid, auth_type, user_workspace.clone(), conn)?;
+    }
+    Ok::<(), FlowyError>(())
+  })
 }
