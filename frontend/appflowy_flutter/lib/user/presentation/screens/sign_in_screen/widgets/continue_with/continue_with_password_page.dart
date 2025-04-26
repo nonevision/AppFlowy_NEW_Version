@@ -1,5 +1,6 @@
 import 'package:appflowy/generated/locale_keys.g.dart';
 import 'package:appflowy/user/application/sign_in_bloc.dart';
+import 'package:appflowy/user/presentation/screens/sign_in_screen/widgets/continue_with/forgot_password_page.dart';
 import 'package:appflowy/user/presentation/screens/sign_in_screen/widgets/logo/logo.dart';
 import 'package:appflowy/workspace/presentation/settings/pages/account/password/password_suffix_icon.dart';
 import 'package:appflowy_ui/appflowy_ui.dart';
@@ -132,14 +133,6 @@ class _ContinueWithPasswordPageState extends State<ContinueWithPasswordPage> {
     final theme = AppFlowyTheme.of(context);
     final iconSize = 20.0;
     final textStyle = AFButtonSize.l.buildTextStyle(context);
-    final textHeight = textStyle.height;
-    final textFontSize = textStyle.fontSize;
-
-    // the indicator height is the height of the text style.
-    double indicatorHeight = 20;
-    if (textHeight != null && textFontSize != null) {
-      indicatorHeight = textHeight * textFontSize;
-    }
 
     return [
       // Password input
@@ -162,30 +155,45 @@ class _ContinueWithPasswordPageState extends State<ContinueWithPasswordPage> {
         onSubmitted: widget.onEnterPassword,
       ),
       // todo: ask designer to provide the spacing
-      // VSpace(8),
+      VSpace(8),
 
       // Forgot password button
-      // Align(
-      //   alignment: Alignment.centerLeft,
-      //   child: AFGhostTextButton(
-      //     text: LocaleKeys.signIn_forgotPassword.tr(),
-      //     size: AFButtonSize.s,
-      //     padding: EdgeInsets.zero,
-      //     onTap: widget.onForgotPassword,
-      //     textColor: (context, isHovering, disabled) {
-      //       final theme = AppFlowyTheme.of(context);
-      //       if (isHovering) {
-      //         return theme.fillColorScheme.themeThickHover;
-      //       }
-      //       return theme.textColorScheme.theme;
-      //     },
-      //   ),
-      // ),
+      Align(
+        alignment: Alignment.centerLeft,
+        child: AFGhostTextButton(
+          text: LocaleKeys.signIn_forgotPassword.tr(),
+          size: AFButtonSize.s,
+          padding: EdgeInsets.zero,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ForgotPasswordPage(
+                  email: widget.email,
+                  backToLogin: widget.backToLogin,
+                  onEnterPassword: widget.onEnterPassword,
+                  onForgotPassword: widget.onForgotPassword,
+                ),
+              ),
+            );
+          },
+          textStyle: theme.textStyle.body.standard(
+            color: theme.textColorScheme.action,
+          ),
+          textColor: (context, isHovering, disabled) {
+            final theme = AppFlowyTheme.of(context);
+            if (isHovering) {
+              return theme.fillColorScheme.themeThickHover;
+            }
+            return theme.textColorScheme.theme;
+          },
+        ),
+      ),
       VSpace(20),
 
       // Continue button
       isSubmitting
-          ? _buildIndicator(indicatorHeight: indicatorHeight)
+          ? _buildIndicator(textStyle: textStyle)
           : _buildContinueButton(textStyle: textStyle),
       VSpace(20),
     ];
@@ -206,20 +214,36 @@ class _ContinueWithPasswordPageState extends State<ContinueWithPasswordPage> {
   }
 
   Widget _buildIndicator({
-    required double indicatorHeight,
+    required TextStyle textStyle,
   }) {
-    return AFFilledButton.disabled(
-      size: AFButtonSize.l,
-      builder: (context, isHovering, disabled) {
-        return Align(
-          child: SizedBox.square(
-            dimension: indicatorHeight,
-            child: CircularProgressIndicator(
-              strokeWidth: 3.0,
-            ),
-          ),
-        );
-      },
+    final theme = AppFlowyTheme.of(context);
+    return Opacity(
+      opacity: 0.7, // TODO: ask designer to provide the opacity
+      child: AFFilledButton.disabled(
+        size: AFButtonSize.l,
+        backgroundColor: theme.fillColorScheme.themeThick,
+        builder: (context, isHovering, disabled) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox.square(
+                dimension: 15.0,
+                child: CircularProgressIndicator(
+                  color: theme.textColorScheme.onFill,
+                  strokeWidth: 3.0,
+                ),
+              ),
+              HSpace(theme.spacing.l),
+              Text(
+                'Verifying...',
+                style: textStyle.copyWith(
+                  color: theme.textColorScheme.onFill,
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 
