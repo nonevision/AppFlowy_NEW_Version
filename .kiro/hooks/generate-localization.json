@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Generate Localization",
+      "trigger": "PreToolUse",
+      "description": "Generate localization files for AppFlowy",
+      "action": {
+        "type": "command",
+        "command": "cd \"d:\\Work\\github\\AppFlowy\\frontend\\appflowy_flutter\" ; flutter gen-l10n"
+      }
+    }
+  ]
+}
