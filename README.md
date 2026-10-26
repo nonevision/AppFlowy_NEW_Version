@@ -99,12 +99,6 @@ To add translations, you can manually edit the JSON translation files in `/front
 the [inlang online editor](https://inlang.com/editor/github.com/AppFlowy-IO/AppFlowy), or
 run `npx inlang machine translate` to add missing translations.
 
-## Join the community to build AppFlowy together
-
-<a href="https://github.com/AppFlowy-IO/AppFlowy/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=AppFlowy-IO/AppFlowy" />
-</a>
-
 ## Why Are We Building This?
 
 Notion has been our favourite project and knowledge management tool in recent years because of its aesthetic appeal and
